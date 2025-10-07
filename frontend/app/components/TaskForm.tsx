@@ -39,7 +39,6 @@ export default function TaskForm({
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
-  const [touched, setTouched] = useState<{ [key: string]: boolean }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -48,8 +47,8 @@ export default function TaskForm({
     } else {
       setTask({ title: "", description: "", completed: false });
     }
+    
     setErrors({});
-    setTouched({});
   }, [initialData, open]);
 
   const validateField = (name: string, value: string): string | undefined => {
@@ -93,29 +92,16 @@ export default function TaskForm({
     const { name, value } = e.target;
     setTask((prev) => ({ ...prev, [name]: value }));
 
-    if (touched[name]) {
-      const error = validateField(name, value);
+    if (errors[name as keyof FormErrors]) {
       setErrors((prev) => ({
         ...prev,
-        [name]: error,
+        [name]: undefined,
       }));
     }
   };
 
-  const handleBlur = (name: string) => {
-    setTouched((prev) => ({ ...prev, [name]: true }));
-    const value = task[name as keyof TaskFormData] as string;
-    const error = validateField(name, value);
-    setErrors((prev) => ({
-      ...prev,
-      [name]: error,
-    }));
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    setTouched({ title: true, description: true });
 
     if (!validateForm()) {
       return;
@@ -130,6 +116,11 @@ export default function TaskForm({
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleCancel = () => {
+    setErrors({});
+    onOpenChange(false);
   };
 
   return (
@@ -154,11 +145,10 @@ export default function TaskForm({
                 name="title"
                 value={task.title}
                 onChange={handleChange}
-                onBlur={() => handleBlur("title")}
                 placeholder="Ej: Aprender Go"
-                color={errors.title && touched.title ? "red" : undefined}
+                color={errors.title ? "red" : undefined}
               />
-              {errors.title && touched.title && (
+              {errors.title && (
                 <Text size="1" color="red" mt="1">
                   {errors.title}
                 </Text>
@@ -173,13 +163,10 @@ export default function TaskForm({
                 name="description"
                 value={task.description}
                 onChange={handleChange}
-                onBlur={() => handleBlur("description")}
                 placeholder="Ej: Completar tutorial de Go y practicar con proyectos"
-                color={
-                  errors.description && touched.description ? "red" : undefined
-                }
+                color={errors.description ? "red" : undefined}
               />
-              {errors.description && touched.description && (
+              {errors.description && (
                 <Text size="1" color="red" mt="1">
                   {errors.description}
                 </Text>
@@ -206,13 +193,16 @@ export default function TaskForm({
                 </Callout.Text>
               </Callout.Root>
             )}
-            
+
             <Flex justify="end" gap="3" mt="4">
-              <Dialog.Close>
-                <Button variant="soft" color="gray" type="button">
-                  Cancelar
-                </Button>
-              </Dialog.Close>
+              <Button
+                variant="soft"
+                color="gray"
+                type="button"
+                onClick={handleCancel}
+              >
+                Cancelar
+              </Button>
               <Button type="submit" color="blue" disabled={isSubmitting}>
                 {isSubmitting
                   ? "Guardando..."
