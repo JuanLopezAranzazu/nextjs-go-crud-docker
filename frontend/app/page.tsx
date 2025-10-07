@@ -4,21 +4,17 @@ import { useEffect, useState } from "react";
 import { Button, Flex, Heading } from "@radix-ui/themes";
 import TaskTable from "./components/TaskTable";
 import TaskForm from "./components/TaskForm";
-
-type Task = {
-  id: number;
-  title: string;
-  description: string;
-  completed: boolean;
-  created_at?: string;
-};
+import DeleteConfirmDialog from "./components/DeleteConfirmDialog";
+import { Task, TaskFormData } from "./types/Task";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export default function HomePage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [open, setOpen] = useState(false);
-  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [editingTask, setEditingTask] = useState<TaskFormData | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
 
   const fetchTasks = async () => {
     const res = await fetch(`${API_URL}/tasks`);
@@ -30,7 +26,7 @@ export default function HomePage() {
     fetchTasks();
   }, []);
 
-  const handleSubmit = async (task: Task) => {
+  const handleSubmit = async (task: TaskFormData) => {
     const method = task.id ? "PUT" : "POST";
     const url = task.id ? `${API_URL}/tasks/${task.id}` : `${API_URL}/tasks`;
 
@@ -45,11 +41,20 @@ export default function HomePage() {
     setOpen(false);
   };
 
-  const handleDelete = async (id: number) => {
-    await fetch(`${API_URL}/tasks/${id}`, {
-      method: "DELETE",
-    });
-    fetchTasks();
+  const handleDeleteClick = (task: Task) => {
+    setTaskToDelete(task);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (taskToDelete) {
+      await fetch(`${API_URL}/tasks/${taskToDelete.id}`, {
+        method: "DELETE",
+      });
+      fetchTasks();
+      setDeleteDialogOpen(false);
+      setTaskToDelete(null);
+    }
   };
 
   const handleOpenChange = (isOpen: boolean) => {
@@ -85,7 +90,7 @@ export default function HomePage() {
       <TaskTable
         tasks={tasks}
         onEdit={handleEditTask}
-        onDelete={handleDelete}
+        onDelete={handleDeleteClick}
       />
 
       <TaskForm
@@ -93,6 +98,13 @@ export default function HomePage() {
         onOpenChange={handleOpenChange}
         onSubmit={handleSubmit}
         initialData={editingTask}
+      />
+
+      <DeleteConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={handleDeleteConfirm}
+        taskTitle={taskToDelete?.title || ""}
       />
     </Flex>
   );

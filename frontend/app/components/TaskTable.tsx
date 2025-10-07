@@ -97,7 +97,7 @@ export default function TaskTable({ tasks, onEdit, onDelete }: TaskTableProps) {
                       size="1"
                       variant="soft"
                       color="red"
-                      onClick={() => onDelete(task.id)}
+                      onClick={() => onDelete(task)}
                     >
                       <TrashIcon width="16" height="16" />
                     </IconButton>
