@@ -10,6 +10,33 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// obtener tareas con paginación
+func GetTasksPaginated(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query()
+	pageStr := query.Get("page")
+	limitStr := query.Get("limit")
+
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page < 1 {
+		page = 1
+	}
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil || limit < 1 {
+		limit = 10
+	}
+
+	var tasks []models.Task
+	offset := (page - 1) * limit
+	result := db.DB.Limit(limit).Offset(offset).Find(&tasks)
+
+	if result.Error != nil {
+		http.Error(w, "Error al obtener tareas", http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(tasks)
+}
+
 // obtener todas las tareas
 func GetTasks(w http.ResponseWriter, r *http.Request) {
 	var tasks []models.Task
