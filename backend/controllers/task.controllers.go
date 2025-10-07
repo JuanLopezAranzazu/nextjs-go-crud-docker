@@ -27,14 +27,24 @@ func GetTasksPaginated(w http.ResponseWriter, r *http.Request) {
 
 	var tasks []models.Task
 	offset := (page - 1) * limit
-	result := db.DB.Limit(limit).Offset(offset).Find(&tasks)
 
+	// obtener tareas paginadas
+	result := db.DB.Limit(limit).Offset(offset).Find(&tasks)
 	if result.Error != nil {
 		http.Error(w, "Error al obtener tareas", http.StatusInternalServerError)
 		return
 	}
 
-	json.NewEncoder(w).Encode(tasks)
+	// contar el total de tareas
+	var total int64
+	db.DB.Model(&models.Task{}).Count(&total)
+
+	// Devolver JSON con tasks y total
+	response := map[string]interface{}{
+		"tasks": tasks,
+		"total": total,
+	}
+	json.NewEncoder(w).Encode(response)
 }
 
 // obtener todas las tareas

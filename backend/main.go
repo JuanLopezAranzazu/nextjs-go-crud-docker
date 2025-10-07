@@ -8,6 +8,7 @@ import (
 	"github.com/JuanLopezAranzazu/backend/models"
 	"github.com/JuanLopezAranzazu/backend/routes"
 	"github.com/gorilla/mux"
+	"github.com/rs/cors"
 )
 
 func main() {
@@ -25,9 +26,20 @@ func main() {
 	// rutas para tareas
 	routes.TaskRoutes(r)
 
+	// configurar CORS
+	c := cors.New(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:3000"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},
+		AllowedHeaders:   []string{"Content-Type", "Authorization"},
+		AllowCredentials: true,
+	})
+
+	// aplicar CORS al router
+	handler := c.Handler(r)
+
 	// iniciar servidor
 	log.Println("Servidor iniciado en http://localhost:8000")
-	if err := http.ListenAndServe(":8000", r); err != nil {
+	if err := http.ListenAndServe(":8000", handler); err != nil {
 		log.Fatal("Error al iniciar el servidor: ", err)
 	}
 }
