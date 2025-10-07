@@ -5,7 +5,8 @@ import { Button, Flex, Heading } from "@radix-ui/themes";
 import TaskTable from "./components/TaskTable";
 import TaskForm from "./components/TaskForm";
 import DeleteConfirmDialog from "./components/DeleteConfirmDialog";
-import { Task, TaskFormData } from "./types/Task";
+import Pagination from "./components/Pagination";
+import { Task, TaskFormData, PaginatedResponse } from "./types/Task";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -15,17 +16,29 @@ export default function HomePage() {
   const [editingTask, setEditingTask] = useState<TaskFormData | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
+  // estados para la paginacion
+  const [currentPage, setCurrentPage] = useState(1);
+  const [limit, setLimit] = useState(8);
+  const [total, setTotal] = useState(0);
 
+  // calcular total de paginas
+  const totalPages = Math.ceil(total / limit);
+
+  // obtener las tareas con paginacion
   const fetchTasks = async () => {
-    const res = await fetch(`${API_URL}/tasks`);
-    const data = await res.json();
-    setTasks(data);
+    const res = await fetch(
+      `${API_URL}/tasks/paginated?page=${currentPage}&limit=${limit}`
+    );
+    const data: PaginatedResponse = await res.json();
+    setTasks(data.tasks);
+    setTotal(data.total);
   };
 
   useEffect(() => {
     fetchTasks();
-  }, []);
+  }, [currentPage, limit]);
 
+  // actualizar o crear nueva tarea
   const handleSubmit = async (task: TaskFormData) => {
     const method = task.id ? "PUT" : "POST";
     const url = task.id ? `${API_URL}/tasks/${task.id}` : `${API_URL}/tasks`;
@@ -46,12 +59,19 @@ export default function HomePage() {
     setDeleteDialogOpen(true);
   };
 
+  // eliminar tarea
   const handleDeleteConfirm = async () => {
     if (taskToDelete) {
       await fetch(`${API_URL}/tasks/${taskToDelete.id}`, {
         method: "DELETE",
       });
-      fetchTasks();
+      
+      if (tasks.length === 1 && currentPage > 1) {
+        setCurrentPage(currentPage - 1);
+      } else {
+        fetchTasks();
+      }
+      
       setDeleteDialogOpen(false);
       setTaskToDelete(null);
     }
@@ -74,13 +94,22 @@ export default function HomePage() {
     setOpen(true);
   };
 
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handleLimitChange = (newLimit: number) => {
+    setLimit(newLimit);
+    setCurrentPage(1);
+  };
+
   return (
     <Flex
       direction="column"
       align="center"
       className="min-h-screen py-10 gap-6"
     >
-      <Flex justify="between" align="center" className="w-full max-w-4xl">
+      <Flex justify="between" align="center" className="w-full max-w-5xl">
         <Heading size="7">Gestor de Tareas</Heading>
         <Button color="blue" onClick={handleNewTask}>
           Nueva Tarea
@@ -92,6 +121,17 @@ export default function HomePage() {
         onEdit={handleEditTask}
         onDelete={handleDeleteClick}
       />
+
+      {totalPages > 0 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          limit={limit}
+          total={total}
+          onPageChange={handlePageChange}
+          onLimitChange={handleLimitChange}
+        />
+      )}
 
       <TaskForm
         open={open}

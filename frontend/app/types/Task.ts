@@ -13,3 +13,8 @@ export type TaskFormData = {
   description?: string;
   completed: boolean;
 };
+
+export type PaginatedResponse = {
+  tasks: Task[];
+  total: number;
+};
