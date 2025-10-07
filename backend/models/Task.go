@@ -6,6 +6,7 @@ import (
 	"gorm.io/gorm"
 )
 
+// modelo para tareas
 type Task struct {
 	ID          uint           `gorm:"primaryKey;autoIncrement" json:"id"`
 	Title       string         `gorm:"type:varchar(255);not null" json:"title"`

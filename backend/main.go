@@ -22,6 +22,9 @@ func main() {
 	// index
 	r.HandleFunc("/", routes.HomeHandler)
 
+	// rutas para tareas
+	routes.TaskRoutes(r)
+
 	// iniciar servidor
 	log.Println("Servidor iniciado en http://localhost:8000")
 	if err := http.ListenAndServe(":8000", r); err != nil {
