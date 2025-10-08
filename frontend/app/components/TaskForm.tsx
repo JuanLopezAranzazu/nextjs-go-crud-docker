@@ -79,7 +79,7 @@ export default function TaskForm({
     const titleError = validateField("title", task.title);
     if (titleError) newErrors.title = titleError;
 
-    const descriptionError = validateField("description", task.description);
+    const descriptionError = validateField("description", task.description || "");
     if (descriptionError) newErrors.description = descriptionError;
 
     setErrors(newErrors);
